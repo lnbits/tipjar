@@ -6,9 +6,6 @@ from starlette.exceptions import HTTPException
 from lnbits.core.crud import get_user, get_wallet
 from lnbits.decorators import WalletTypeInfo, get_key_type
 
-# todo: use the API, not direct import
-from ..satspay.crud import create_charge  # type: ignore
-from ..satspay.models import CreateCharge  # type: ignore
 from . import tipjar_ext
 from .crud import (
     create_tip,
@@ -17,11 +14,13 @@ from .crud import (
     delete_tipjar,
     get_tip,
     get_tipjar,
+    get_tipjar_tips,
     get_tipjars,
     get_tips,
     update_tip,
     update_tipjar,
 )
+from .helpers import create_charge, delete_charge
 from .models import createTip, createTipJar, createTips
 
 
@@ -69,23 +68,23 @@ async def api_create_tip(data: createTips):
         name = "Anonymous"
 
     description = f"{name}: {message}"
-    charge = await create_charge(
-        user=wallet.user,
-        data=CreateCharge(
-            amount=sats,
-            webhook=tipjar.webhook or "",
-            description=description,
-            onchainwallet=tipjar.onchain or "",
-            lnbitswallet=tipjar.wallet,
-            completelink="/tipjar/" + str(tipjar_id),
-            completelinktext="Thanks for the tip!",
-            time=1440,
-            custom_css="",
-        ),
+    charge_id = await create_charge(
+        data={
+            "amount": sats,
+            "webhook": tipjar.webhook or "",
+            "description": description,
+            "onchainwallet": tipjar.onchain or "",
+            "lnbitswallet": tipjar.wallet,
+            "completelink": "/tipjar/" + str(tipjar_id),
+            "completelinktext": "Thanks for the tip!",
+            "time": 1440,
+            "custom_css": "",
+        },
+        api_key=wallet.inkey,
     )
 
     await create_tip(
-        id=charge.id,
+        id=charge_id,
         wallet=tipjar.wallet,
         message=message,
         name=name,
@@ -93,7 +92,7 @@ async def api_create_tip(data: createTips):
         tipjar=data.tipjar,
     )
 
-    return {"redirect_url": f"/satspay/{charge.id}"}
+    return {"redirect_url": f"/satspay/{charge_id}"}
 
 
 @tipjar_ext.get("/api/v1/tipjars")
@@ -195,6 +194,7 @@ async def api_delete_tip(
             detail="Not authorized to delete this tip!",
         )
     await delete_tip(tip_id)
+    await delete_charge(tip_id, wallet.wallet.inkey)
 
     return "", HTTPStatus.NO_CONTENT
 
@@ -215,6 +215,11 @@ async def api_delete_tipjar(
             status_code=HTTPStatus.FORBIDDEN,
             detail="Not authorized to delete this tipjar!",
         )
+
+    tips = await get_tipjar_tips(tipjar_id)
+    for tip in tips:
+        await delete_charge(tip.id, wallet.wallet.inkey)
+
     await delete_tipjar(tipjar_id)
 
     return "", HTTPStatus.NO_CONTENT
