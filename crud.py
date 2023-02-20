@@ -1,9 +1,7 @@
-from typing import Optional
+from typing import List, Optional
 
 from lnbits.db import SQLITE
 
-# todo: use the API, not direct import
-from ..satspay.crud import delete_charge  # type: ignore
 from . import db
 from .models import Tip, TipJar, createTipJar
 
@@ -77,9 +75,9 @@ async def get_tipjars(wallet_id: str) -> Optional[list]:
 
 async def delete_tipjar(tipjar_id: int) -> None:
     """Delete a TipJar and all corresponding Tips"""
-    rows = await db.fetchall("SELECT * FROM tipjar.Tips WHERE tipjar = ?", (tipjar_id,))
-    for row in rows:
-        await delete_tip(row["id"])
+    tips = await get_tipjar_tips(tipjar_id)
+    for tip in tips:
+        await delete_tip(tip.id)
     await db.execute("DELETE FROM tipjar.TipJars WHERE id = ?", (tipjar_id,))
 
 
@@ -87,6 +85,12 @@ async def get_tip(tip_id: str) -> Optional[Tip]:
     """Return a Tip"""
     row = await db.fetchone("SELECT * FROM tipjar.Tips WHERE id = ?", (tip_id,))
     return Tip(**row) if row else None
+
+
+async def get_tipjar_tips(tipjar_id: int) -> List[Tip]:
+    """Return all Tips for a tipjar"""
+    rows = await db.fetchall("SELECT * FROM tipjar.Tips WHERE tipjar = ?", (tipjar_id,))
+    return [Tip(**row) for row in rows]
 
 
 async def get_tips(wallet_id: str) -> Optional[list]:
@@ -98,7 +102,6 @@ async def get_tips(wallet_id: str) -> Optional[list]:
 async def delete_tip(tip_id: str) -> None:
     """Delete a Tip and its corresponding statspay charge"""
     await db.execute("DELETE FROM tipjar.Tips WHERE id = ?", (tip_id,))
-    await delete_charge(tip_id)
 
 
 async def update_tip(tip_id: str, **kwargs) -> Tip:
