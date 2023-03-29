@@ -62,12 +62,11 @@ async def api_create_tip(data: createTips):
 
     name = data.name
 
-    # Ensure that description string can be split reliably
-    name = name.replace('"', "''")
     if not name:
         name = "Anonymous"
 
-    description = f"{name}: {message}"
+    # Ensure that description string can be split reliably
+    description = f"{len(name)}|{name}{message}"
     charge_id = await create_charge(
         data={
             "amount": sats,
