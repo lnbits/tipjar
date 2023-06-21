@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from fastapi import Depends, Query, Request
+from fastapi import Depends, Request
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException
 
@@ -21,7 +21,7 @@ async def index(request: Request, user: User = Depends(check_user_exists)):
 
 
 @tipjar_ext.get("/{tipjar_id}")
-async def tip(request: Request, tipjar_id: int = Query(None)):
+async def tip(request: Request, tipjar_id: int):
     """Return the donation form for the Tipjar corresponding to id"""
     tipjar = await get_tipjar(tipjar_id)
     if not tipjar:
