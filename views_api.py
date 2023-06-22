@@ -124,8 +124,8 @@ async def api_get_tips(wallet: WalletTypeInfo = Depends(get_key_type)):
 @tipjar_ext.put("/api/v1/tips/{tip_id}")
 async def api_update_tip(
     data: createTip,
+    tip_id: str,
     wallet: WalletTypeInfo = Depends(get_key_type),
-    tip_id: str = Query(None),
 ):
     """Update a tip with the data given in the request"""
     if tip_id:
@@ -153,8 +153,8 @@ async def api_update_tip(
 @tipjar_ext.put("/api/v1/tipjars/{tipjar_id}")
 async def api_update_tipjar(
     data: createTipJar,
+    tipjar_id: int,
     wallet: WalletTypeInfo = Depends(get_key_type),
-    tipjar_id: int = Query(None),
 ):
     """Update a tipjar with the data given in the request"""
     if tipjar_id:
@@ -180,7 +180,7 @@ async def api_update_tipjar(
 
 @tipjar_ext.delete("/api/v1/tips/{tip_id}")
 async def api_delete_tip(
-    wallet: WalletTypeInfo = Depends(get_key_type), tip_id: str = Query(None)
+    tip_id: str, wallet: WalletTypeInfo = Depends(get_key_type)
 ):
     """Delete the tip with the given tip_id"""
     tip = await get_tip(tip_id)
@@ -201,7 +201,8 @@ async def api_delete_tip(
 
 @tipjar_ext.delete("/api/v1/tipjars/{tipjar_id}")
 async def api_delete_tipjar(
-    wallet: WalletTypeInfo = Depends(get_key_type), tipjar_id: int = Query(None)
+    tipjar_id: int,
+    wallet: WalletTypeInfo = Depends(get_key_type)
 ):
     """Delete the tipjar with the given tipjar_id"""
     tipjar = await get_tipjar(tipjar_id)
