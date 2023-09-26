@@ -6,10 +6,16 @@ The TipJar extension allows you to integrate Bitcoin Lightning (and on-chain) ti
 
 <h2>How to set it up</h2>
 
-1. Simply create a new Tip Jar with the desired details (onchain optional):  
+1. Simply create a new Tip Jar with the desired details (onchain and webhook optional):  
 ![image](https://user-images.githubusercontent.com/28876473/134996842-ec2f2783-2eef-4671-8eaf-023713865512.png)
 1. Share the URL you get from this little button:  
 ![image](https://user-images.githubusercontent.com/28876473/134996973-f8ed4632-ea2f-4b62-83f1-1e4c6b6c91fa.png)
 
+<h2>A note on webhooks</h3>
+
+The `description` field of the message POSTed to your webhook will be in the following format:
+ * `{length of the name}|{name}{message}`  
+
+You can split along the first `|`. This will give you the index at which to split between the name of the tipper and the message of the tipper.
 
 <h3>And that's it already! Let the sats flow!</h3>
