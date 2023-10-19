@@ -65,13 +65,12 @@ async def api_create_tip(data: createTips):
     if not name:
         name = "Anonymous"
 
-    # Ensure that description string can be split reliably
-    description = f"{len(name)}|{name}{message}"
     charge_id = await create_charge(
         data={
             "amount": sats,
             "webhook": tipjar.webhook or "",
-            "description": description,
+            "name": name,
+            "description": message,
             "onchainwallet": tipjar.onchain or "",
             "lnbitswallet": tipjar.wallet,
             "completelink": "/tipjar/" + str(tipjar_id),
@@ -136,7 +135,6 @@ async def api_update_tip(
             )
 
         if tip.wallet != wallet.wallet.id:
-
             raise HTTPException(
                 status_code=HTTPStatus.FORBIDDEN, detail="Not your tip."
             )
@@ -178,9 +176,7 @@ async def api_update_tipjar(
 
 
 @tipjar_ext.delete("/api/v1/tips/{tip_id}")
-async def api_delete_tip(
-    tip_id: str, wallet: WalletTypeInfo = Depends(get_key_type)
-):
+async def api_delete_tip(tip_id: str, wallet: WalletTypeInfo = Depends(get_key_type)):
     """Delete the tip with the given tip_id"""
     tip = await get_tip(tip_id)
     if not tip:
@@ -200,8 +196,7 @@ async def api_delete_tip(
 
 @tipjar_ext.delete("/api/v1/tipjars/{tipjar_id}")
 async def api_delete_tipjar(
-    tipjar_id: int,
-    wallet: WalletTypeInfo = Depends(get_key_type)
+    tipjar_id: int, wallet: WalletTypeInfo = Depends(get_key_type)
 ):
     """Delete the tipjar with the given tipjar_id"""
     tipjar = await get_tipjar(tipjar_id)
@@ -210,7 +205,6 @@ async def api_delete_tipjar(
             status_code=HTTPStatus.NOT_FOUND, detail="No tipjar with this ID!"
         )
     if tipjar.wallet != wallet.wallet.id:
-
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
             detail="Not authorized to delete this tipjar!",
