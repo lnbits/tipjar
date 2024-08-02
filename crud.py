@@ -36,7 +36,7 @@ async def create_tipjar(data: createTipJar) -> TipJar:
     returning = "" if db.type == SQLITE else "RETURNING ID"
     method = db.execute if db.type == SQLITE else db.fetchone
 
-    result = await (method)(
+    result = await method(
         f"""
         INSERT INTO tipjar.TipJars (
             name,
