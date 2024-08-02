@@ -1,11 +1,12 @@
 from fastapi import APIRouter
 
-from lnbits.db import Database
-from lnbits.helpers import template_renderer
-
-db = Database("ext_tipjar")
+from .crud import db
+from .views import tipjar_generic_router
+from .views_api import tipjar_api_router
 
 tipjar_ext: APIRouter = APIRouter(prefix="/tipjar", tags=["tipjar"])
+tipjar_ext.include_router(tipjar_generic_router)
+tipjar_ext.include_router(tipjar_api_router)
 
 tipjar_static_files = [
     {
@@ -15,9 +16,4 @@ tipjar_static_files = [
 ]
 
 
-def tipjar_renderer():
-    return template_renderer(["tipjar/templates"])
-
-
-from .views import *  # noqa: F401,F403
-from .views_api import *  # noqa: F401,F403
+__all__ = ["db", "tipjar_ext", "tipjar_static_files"]
