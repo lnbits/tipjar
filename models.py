@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class createTip(BaseModel):
+class CreateTip(BaseModel):
     id: str
     wallet: str
     sats: int
@@ -28,14 +28,14 @@ class Tip(BaseModel):
         return cls(**dict(row))
 
 
-class createTipJar(BaseModel):
+class CreateTipJar(BaseModel):
     name: str
     wallet: str
     webhook: Optional[str]
     onchain: Optional[str]
 
 
-class createTips(BaseModel):
+class CreateTips(BaseModel):
     name: str
     sats: str
     tipjar: str

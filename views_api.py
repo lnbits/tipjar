@@ -1,12 +1,10 @@
 from http import HTTPStatus
 
-from fastapi import Depends, Query
-from starlette.exceptions import HTTPException
-
+from fastapi import APIRouter, Depends, HTTPException
 from lnbits.core.crud import get_user, get_wallet
-from lnbits.decorators import WalletTypeInfo, get_key_type
+from lnbits.core.models import WalletTypeInfo
+from lnbits.decorators import get_key_type
 
-from . import tipjar_ext
 from .crud import (
     create_tip,
     create_tipjar,
@@ -21,16 +19,20 @@ from .crud import (
     update_tipjar,
 )
 from .helpers import create_charge, delete_charge
-from .models import createTip, createTipJar, createTips
+from .models import CreateTip, CreateTipJar, CreateTips
+
+tipjar_api_router = APIRouter()
 
 
-@tipjar_ext.post("/api/v1/tipjars")
-async def api_create_tipjar(data: createTipJar):
+@tipjar_api_router.post("/api/v1/tipjars")
+async def api_create_tipjar(data: CreateTipJar):
     """Create a tipjar, which holds data about how/where to post tips"""
     try:
         tipjar = await create_tipjar(data)
-    except Exception as e:
-        raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(e))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=str(exc)
+        ) from exc
 
     return tipjar.dict()
 
@@ -39,8 +41,8 @@ async def user_from_wallet(wallet: WalletTypeInfo = Depends(get_key_type)):
     return wallet.wallet.user
 
 
-@tipjar_ext.post("/api/v1/tips")
-async def api_create_tip(data: createTips):
+@tipjar_api_router.post("/api/v1/tips")
+async def api_create_tip(data: CreateTips):
     """Take data from tip form and return satspay charge"""
     sats = int(data.sats)
     message = data.message
@@ -82,7 +84,7 @@ async def api_create_tip(data: createTips):
     )
 
     await create_tip(
-        id=charge_id,
+        tip_id=charge_id,
         wallet=tipjar.wallet,
         message=message,
         name=name,
@@ -93,7 +95,7 @@ async def api_create_tip(data: createTips):
     return {"redirect_url": f"/satspay/{charge_id}"}
 
 
-@tipjar_ext.get("/api/v1/tipjars")
+@tipjar_api_router.get("/api/v1/tipjars")
 async def api_get_tipjars(wallet: WalletTypeInfo = Depends(get_key_type)):
     """Return list of all tipjars assigned to wallet with given invoice key"""
     user = await get_user(wallet.wallet.user)
@@ -106,7 +108,7 @@ async def api_get_tipjars(wallet: WalletTypeInfo = Depends(get_key_type)):
     return [tipjar.dict() for tipjar in tipjars]
 
 
-@tipjar_ext.get("/api/v1/tips")
+@tipjar_api_router.get("/api/v1/tips")
 async def api_get_tips(wallet: WalletTypeInfo = Depends(get_key_type)):
     """Return list of all tips assigned to wallet with given invoice key"""
     user = await get_user(wallet.wallet.user)
@@ -119,9 +121,9 @@ async def api_get_tips(wallet: WalletTypeInfo = Depends(get_key_type)):
     return [tip.dict() for tip in tips]
 
 
-@tipjar_ext.put("/api/v1/tips/{tip_id}")
+@tipjar_api_router.put("/api/v1/tips/{tip_id}")
 async def api_update_tip(
-    data: createTip,
+    data: CreateTip,
     tip_id: str,
     wallet: WalletTypeInfo = Depends(get_key_type),
 ):
@@ -147,9 +149,9 @@ async def api_update_tip(
     return tip.dict()
 
 
-@tipjar_ext.put("/api/v1/tipjars/{tipjar_id}")
+@tipjar_api_router.put("/api/v1/tipjars/{tipjar_id}")
 async def api_update_tipjar(
-    data: createTipJar,
+    data: CreateTipJar,
     tipjar_id: int,
     wallet: WalletTypeInfo = Depends(get_key_type),
 ):
@@ -175,7 +177,7 @@ async def api_update_tipjar(
     return tipjar.dict()
 
 
-@tipjar_ext.delete("/api/v1/tips/{tip_id}")
+@tipjar_api_router.delete("/api/v1/tips/{tip_id}")
 async def api_delete_tip(tip_id: str, wallet: WalletTypeInfo = Depends(get_key_type)):
     """Delete the tip with the given tip_id"""
     tip = await get_tip(tip_id)
@@ -194,7 +196,7 @@ async def api_delete_tip(tip_id: str, wallet: WalletTypeInfo = Depends(get_key_t
     return "", HTTPStatus.NO_CONTENT
 
 
-@tipjar_ext.delete("/api/v1/tipjars/{tipjar_id}")
+@tipjar_api_router.delete("/api/v1/tipjars/{tipjar_id}")
 async def api_delete_tipjar(
     tipjar_id: int, wallet: WalletTypeInfo = Depends(get_key_type)
 ):

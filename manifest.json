@@ -1,9 +1,9 @@
 {
-    "repos": [
-        {
-            "id": "tipjar",
-            "organisation": "lnbits",
-            "repository": "tipjar"
-        }
-    ]
+  "repos": [
+    {
+      "id": "tipjar",
+      "organisation": "lnbits",
+      "repository": "tipjar"
+    }
+  ]
 }

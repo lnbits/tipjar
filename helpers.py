@@ -1,6 +1,5 @@
 import httpx
-
-from lnbits.app import settings
+from lnbits.settings import settings
 
 
 async def create_charge(data: dict, api_key: str) -> str:

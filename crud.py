@@ -1,13 +1,14 @@
-from typing import List, Optional
+from typing import Optional
 
-from lnbits.db import SQLITE
+from lnbits.db import SQLITE, Database
 
-from . import db
-from .models import Tip, TipJar, createTipJar
+from .models import CreateTipJar, Tip, TipJar
+
+db = Database("ext_tipjar")
 
 
 async def create_tip(
-    id: str, wallet: str, message: str, name: str, sats: int, tipjar: str
+    tip_id: str, wallet: str, message: str, name: str, sats: int, tipjar: str
 ) -> Tip:
     """Create a new Tip"""
     await db.execute(
@@ -22,21 +23,21 @@ async def create_tip(
         )
         VALUES (?, ?, ?, ?, ?, ?)
         """,
-        (id, wallet, name, message, sats, tipjar),
+        (tip_id, wallet, name, message, sats, tipjar),
     )
 
-    tip = await get_tip(id)
+    tip = await get_tip(tip_id)
     assert tip, "Newly created tip couldn't be retrieved"
     return tip
 
 
-async def create_tipjar(data: createTipJar) -> TipJar:
+async def create_tipjar(data: CreateTipJar) -> TipJar:
     """Create a new TipJar"""
 
     returning = "" if db.type == SQLITE else "RETURNING ID"
     method = db.execute if db.type == SQLITE else db.fetchone
 
-    result = await (method)(
+    result = await method(
         f"""
         INSERT INTO tipjar.TipJars (
             name,
@@ -52,7 +53,7 @@ async def create_tipjar(data: createTipJar) -> TipJar:
     if db.type == SQLITE:
         tipjar_id = result._result_proxy.lastrowid
     else:
-        tipjar_id = result[0]
+        tipjar_id = result[0]  # type: ignore
 
     tipjar = await get_tipjar(tipjar_id)
     assert tipjar
@@ -87,7 +88,7 @@ async def get_tip(tip_id: str) -> Optional[Tip]:
     return Tip(**row) if row else None
 
 
-async def get_tipjar_tips(tipjar_id: int) -> List[Tip]:
+async def get_tipjar_tips(tipjar_id: int) -> list[Tip]:
     """Return all Tips for a tipjar"""
     rows = await db.fetchall("SELECT * FROM tipjar.Tips WHERE tipjar = ?", (tipjar_id,))
     return [Tip(**row) for row in rows]
