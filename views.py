@@ -35,5 +35,5 @@ async def tip(request: Request, tipjar_id: int):
 
     return tipjar_renderer().TemplateResponse(
         "tipjar/display.html",
-        {"request": request, "donatee": tipjar.name, "tipjar": tipjar.id},
+        {"request": request, "donatee": tipjar.name, "tipjar_id": tipjar.id},
     )

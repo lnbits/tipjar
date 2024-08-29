@@ -3,7 +3,7 @@ from http import HTTPStatus
 from fastapi import APIRouter, Depends, HTTPException
 from lnbits.core.crud import get_user, get_wallet
 from lnbits.core.models import WalletTypeInfo
-from lnbits.decorators import get_key_type
+from lnbits.decorators import require_admin_key
 
 from .crud import (
     create_tip,
@@ -37,13 +37,9 @@ async def api_create_tipjar(data: CreateTipJar):
     return tipjar.dict()
 
 
-async def user_from_wallet(wallet: WalletTypeInfo = Depends(get_key_type)):
-    return wallet.wallet.user
-
-
 @tipjar_api_router.post("/api/v1/tips")
 async def api_create_tip(data: CreateTips):
-    """Take data from tip form and return satspay charge"""
+    """Public route to take data from tip form and return satspay charge"""
     sats = int(data.sats)
     message = data.message
     if not message:
@@ -54,7 +50,6 @@ async def api_create_tip(data: CreateTips):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Tipjar does not exist."
         )
-
     wallet_id = tipjar.wallet
     wallet = await get_wallet(wallet_id)
     if not wallet:
@@ -62,11 +57,7 @@ async def api_create_tip(data: CreateTips):
             status_code=HTTPStatus.NOT_FOUND, detail="Tipjar wallet does not exist."
         )
 
-    name = data.name
-
-    if not name:
-        name = "Anonymous"
-
+    name = data.name or "Anonymous"
     charge_id = await create_charge(
         data={
             "amount": sats,
@@ -96,9 +87,9 @@ async def api_create_tip(data: CreateTips):
 
 
 @tipjar_api_router.get("/api/v1/tipjars")
-async def api_get_tipjars(wallet: WalletTypeInfo = Depends(get_key_type)):
+async def api_get_tipjars(key_type: WalletTypeInfo = Depends(require_admin_key)):
     """Return list of all tipjars assigned to wallet with given invoice key"""
-    user = await get_user(wallet.wallet.user)
+    user = await get_user(key_type.wallet.user)
     if not user:
         return []
     tipjars = []
@@ -109,9 +100,9 @@ async def api_get_tipjars(wallet: WalletTypeInfo = Depends(get_key_type)):
 
 
 @tipjar_api_router.get("/api/v1/tips")
-async def api_get_tips(wallet: WalletTypeInfo = Depends(get_key_type)):
+async def api_get_tips(key_type: WalletTypeInfo = Depends(require_admin_key)):
     """Return list of all tips assigned to wallet with given invoice key"""
-    user = await get_user(wallet.wallet.user)
+    user = await get_user(key_type.wallet.user)
     if not user:
         return []
     tips = []
@@ -125,7 +116,7 @@ async def api_get_tips(wallet: WalletTypeInfo = Depends(get_key_type)):
 async def api_update_tip(
     data: CreateTip,
     tip_id: str,
-    wallet: WalletTypeInfo = Depends(get_key_type),
+    key_type: WalletTypeInfo = Depends(require_admin_key),
 ):
     """Update a tip with the data given in the request"""
     if tip_id:
@@ -136,7 +127,7 @@ async def api_update_tip(
                 status_code=HTTPStatus.NOT_FOUND, detail="Tip does not exist."
             )
 
-        if tip.wallet != wallet.wallet.id:
+        if tip.wallet != key_type.wallet.id:
             raise HTTPException(
                 status_code=HTTPStatus.FORBIDDEN, detail="Not your tip."
             )
@@ -153,7 +144,7 @@ async def api_update_tip(
 async def api_update_tipjar(
     data: CreateTipJar,
     tipjar_id: int,
-    wallet: WalletTypeInfo = Depends(get_key_type),
+    key_type: WalletTypeInfo = Depends(require_admin_key),
 ):
     """Update a tipjar with the data given in the request"""
     if tipjar_id:
@@ -164,7 +155,7 @@ async def api_update_tipjar(
                 status_code=HTTPStatus.NOT_FOUND, detail="TipJar does not exist."
             )
 
-        if tipjar.wallet != wallet.wallet.id:
+        if tipjar.wallet != key_type.wallet.id:
             raise HTTPException(
                 status_code=HTTPStatus.FORBIDDEN, detail="Not your tipjar."
             )
@@ -178,27 +169,29 @@ async def api_update_tipjar(
 
 
 @tipjar_api_router.delete("/api/v1/tips/{tip_id}")
-async def api_delete_tip(tip_id: str, wallet: WalletTypeInfo = Depends(get_key_type)):
+async def api_delete_tip(
+    tip_id: str, key_type: WalletTypeInfo = Depends(require_admin_key)
+):
     """Delete the tip with the given tip_id"""
     tip = await get_tip(tip_id)
     if not tip:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="No tip with this ID!"
         )
-    if tip.wallet != wallet.wallet.id:
+    if tip.wallet != key_type.wallet.id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
             detail="Not authorized to delete this tip!",
         )
     await delete_tip(tip_id)
-    await delete_charge(tip_id, wallet.wallet.inkey)
+    await delete_charge(tip_id, key_type.wallet.inkey)
 
     return "", HTTPStatus.NO_CONTENT
 
 
 @tipjar_api_router.delete("/api/v1/tipjars/{tipjar_id}")
 async def api_delete_tipjar(
-    tipjar_id: int, wallet: WalletTypeInfo = Depends(get_key_type)
+    tipjar_id: int, key_type: WalletTypeInfo = Depends(require_admin_key)
 ):
     """Delete the tipjar with the given tipjar_id"""
     tipjar = await get_tipjar(tipjar_id)
@@ -206,7 +199,7 @@ async def api_delete_tipjar(
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="No tipjar with this ID!"
         )
-    if tipjar.wallet != wallet.wallet.id:
+    if tipjar.wallet != key_type.wallet.id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
             detail="Not authorized to delete this tipjar!",
@@ -214,7 +207,7 @@ async def api_delete_tipjar(
 
     tips = await get_tipjar_tips(tipjar_id)
     for tip in tips:
-        await delete_charge(tip.id, wallet.wallet.inkey)
+        await delete_charge(tip.id, key_type.wallet.inkey)
 
     await delete_tipjar(tipjar_id)
 
