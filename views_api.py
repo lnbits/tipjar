@@ -58,21 +58,27 @@ async def api_create_tip(data: CreateTips):
         )
 
     name = data.name or "Anonymous"
-    charge_id = await create_charge(
-        data={
-            "amount": sats,
-            "webhook": tipjar.webhook or "",
-            "name": name,
-            "description": message,
-            "onchainwallet": tipjar.onchain or "",
-            "lnbitswallet": tipjar.wallet,
-            "completelink": "/tipjar/" + str(tipjar_id),
-            "completelinktext": "Thanks for the tip!",
-            "time": 1440,
-            "custom_css": "",
-        },
-        api_key=wallet.inkey,
-    )
+    try:
+        charge_id = await create_charge(
+            data={
+                "amount": sats,
+                "webhook": tipjar.webhook or None,
+                "name": name,
+                "description": message,
+                "onchainwallet": tipjar.onchain or None,
+                "lnbitswallet": tipjar.wallet,
+                "completelink": f"/tipjar/{tipjar_id}",
+                "completelinktext": "Thanks for the tip!",
+                "time": 1440,
+                "custom_css": "",
+            },
+            api_key=wallet.inkey,
+        )
+    except Exception as exc:
+        msg = f"Failed to create charge: {exc!s}"
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=msg
+        ) from exc
 
     await create_tip(
         tip_id=charge_id,
@@ -184,7 +190,13 @@ async def api_delete_tip(
             detail="Not authorized to delete this tip!",
         )
     await delete_tip(tip_id)
-    await delete_charge(tip_id, key_type.wallet.inkey)
+    try:
+        await delete_charge(tip_id, key_type.wallet.inkey)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete charge: {exc!s}",
+        ) from exc
 
     return "", HTTPStatus.NO_CONTENT
 
