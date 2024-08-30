@@ -1,5 +1,4 @@
 async def m001_initial(db):
-
     await db.execute(
         f"""
         CREATE TABLE IF NOT EXISTS tipjar.TipJars (
@@ -23,5 +22,13 @@ async def m001_initial(db):
             tipjar {db.big_int} NOT NULL,
             FOREIGN KEY(tipjar) REFERENCES {db.references_schema}TipJars(id)
         );
+        """
+    )
+
+
+async def m002_add_onchain_limit(db):
+    await db.execute(
+        """
+        ALTER TABLE tipjar.TipJars ADD COLUMN onchain_limit INTEGER;
         """
     )

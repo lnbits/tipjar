@@ -152,7 +152,7 @@
         <div class="row">
           <div class="col">
             <div v-if="walletLinks.length > 0">
-              <q-checkbox v-model="tipjarDialog.data.chain" label="Chain" />
+              <q-checkbox v-model="tipjarDialog.chain" label="Chain" />
             </div>
             <div v-else>
               <q-checkbox :value="false" label="Chain" disabled>
@@ -163,7 +163,7 @@
             </div>
           </div>
         </div>
-        <div v-if="tipjarDialog.data.chain">
+        <div v-if="tipjarDialog.chain">
           <q-select
             filled
             dense
@@ -171,7 +171,16 @@
             v-model="tipjarDialog.data.onchain"
             :options="walletLinks"
             label="Chain Wallet"
-          />
+          ></q-select>
+          <q-input
+            filled
+            dense
+            v-model.trim="tipjarDialog.data.onchain_limit"
+            type="number"
+            label="Onchain Limit (sats)"
+            hint="The minimum amount of sats to be paid onchain"
+            class="q-mt-sm"
+          ></q-input>
         </div>
         <q-input
           filled
@@ -259,6 +268,12 @@
               field: 'onchain'
             },
             {
+              name: 'onchain limit',
+              align: 'left',
+              label: 'Limit (Dust)',
+              field: 'onchain_limit'
+            },
+            {
               name: 'webhook',
               align: 'left',
               label: 'Webhook',
@@ -309,6 +324,7 @@
             this.g.user.wallets[0].inkey
           )
           .then(function (response) {
+            console.log(response.data)
             for (i = 0; i < response.data.length; i++) {
               self.walletLinks.push(response.data[i].id)
             }
@@ -322,7 +338,11 @@
         var self = this
 
         LNbits.api
-          .request('GET', '/tipjar/api/v1/tips', this.g.user.wallets[0].inkey)
+          .request(
+            'GET',
+            '/tipjar/api/v1/tips',
+            this.g.user.wallets[0].adminkey
+          )
           .then(function (response) {
             self.tips = response.data.map(function (obj) {
               return mapTipJar(obj)
@@ -340,7 +360,7 @@
               .request(
                 'DELETE',
                 '/tipjar/api/v1/tips/' + tipId,
-                _.findWhere(self.g.user.wallets, {id: tips.wallet}).inkey
+                _.findWhere(self.g.user.wallets, {id: tips.wallet}).adminkey
               )
               .then(function (response) {
                 self.tips = _.reject(self.tips, function (obj) {
@@ -363,7 +383,7 @@
           .request(
             'GET',
             '/tipjar/api/v1/tipjars',
-            this.g.user.wallets[0].inkey
+            this.g.user.wallets[0].adminkey
           )
           .then(function (response) {
             self.tipjars = response.data.map(function (obj) {
@@ -383,7 +403,7 @@
       createTipJar: function (wallet, data) {
         var self = this
         LNbits.api
-          .request('POST', '/tipjar/api/v1/tipjars', wallet.inkey, data)
+          .request('POST', '/tipjar/api/v1/tipjars', wallet.adminkey, data)
           .then(function (response) {
             self.tipjars.push(mapTipJar(response.data))
             self.tipjarDialog.show = false
@@ -395,11 +415,13 @@
       },
       updatetipjarDialog: function (tipjarId) {
         var link = _.findWhere(this.tipjars, {id: tipjarId})
-        console.log(link.id)
+
         this.tipjarDialog.data.id = link.id
         this.tipjarDialog.data.wallet = link.wallet
         this.tipjarDialog.data.name = link.name
         this.tipjarDialog.data.webhook = link.webhook
+        this.tipjarDialog.data.onchain_limit = link.onchain_limit
+        this.tipjarDialog.chain = link.onchain != null
         this.tipjarDialog.show = true
       },
       deleteTipJar: function (tipjarsId) {
@@ -413,7 +435,7 @@
               .request(
                 'DELETE',
                 '/tipjar/api/v1/tipjars/' + tipjarsId,
-                _.findWhere(self.g.user.wallets, {id: tipjars.wallet}).inkey
+                _.findWhere(self.g.user.wallets, {id: tipjars.wallet}).adminkey
               )
               .then(function (response) {
                 self.tipjars = _.reject(self.tipjars, function (obj) {

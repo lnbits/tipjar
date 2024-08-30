@@ -57,6 +57,9 @@ async def api_create_tip(data: CreateTips):
             status_code=HTTPStatus.NOT_FOUND, detail="Tipjar wallet does not exist."
         )
 
+    if tipjar.onchain_limit and (sats <= tipjar.onchain_limit):
+        tipjar.onchain = None
+
     name = data.name or "Anonymous"
     try:
         charge_id = await create_charge(

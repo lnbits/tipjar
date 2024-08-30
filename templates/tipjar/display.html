@@ -69,18 +69,24 @@
       }
     },
     methods: {
-      invoice() {
-        axios
-          .post('/tipjar/api/v1/tips', {
-            tipjar: '{{ tipjar_id }}',
-            name: this.tipDialog.data.name,
-            sats: this.tipDialog.data.sats,
-            message: this.tipDialog.data.message
-          })
-          .then(response => {
-            this.redirect_url = response.data.redirect_url
-            window.location.href = this.redirect_url
-          })
+      async invoice() {
+        try {
+          const {data} = await LNbits.api.request(
+            'POST',
+            '/tipjar/api/v1/tips',
+            null,
+            {
+              name: this.tipDialog.data.name,
+              sats: this.tipDialog.data.sats,
+              tipjar: '{{ tipjar_id }}',
+              message: this.tipDialog.data.message
+            }
+          )
+          this.redirectUrl = data.redirect_url
+          window.location.href = this.redirectUrl
+        } catch (error) {
+          LNbits.utils.notifyApiError(error)
+        }
       }
     }
   })
