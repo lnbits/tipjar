@@ -320,7 +320,7 @@
         LNbits.api
           .request(
             'GET',
-            '/watchonly/api/v1/wallet?network=Testnet',
+            '/watchonly/api/v1/wallet',
             this.g.user.wallets[0].inkey
           )
           .then(function (response) {

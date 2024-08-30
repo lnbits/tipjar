@@ -57,43 +57,8 @@ async def api_create_tip(data: CreateTips):
             status_code=HTTPStatus.NOT_FOUND, detail="Tipjar wallet does not exist."
         )
 
-    name = data.name or "Anonymous"
-    try:
-        charge_id = await create_charge(
-            data={
-                "amount": sats,
-                "webhook": tipjar.webhook or None,
-                "name": name,
-                "description": message,
-                "onchainwallet": tipjar.onchain or "",
-                "lnbitswallet": tipjar.wallet,
-                "completelink": f"/tipjar/{tipjar_id}",
-                "completelinktext": "Thanks for the tip!",
-                "time": 1440,
-                "custom_css": "",
-            },
-            api_key=wallet.inkey,
-        )
-    except Exception as exc:
-        msg = f"Failed to create charge: {exc!s}"
-        raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=msg
-        ) from exc
-    # charge_id = await create_charge(
-    #     data={
-    #         "amount": sats,
-    #         "webhook": tipjar.webhook or "",
-    #         "name": name,
-    #         "description": message,
-    #         "onchainwallet": tipjar.onchain or "",
-    #         "lnbitswallet": tipjar.wallet,
-    #         "completelink": "/tipjar/" + str(tipjar_id),
-    #         "completelinktext": "Thanks for the tip!",
-    #         "time": 1440,
-    #         "custom_css": "",
-    #     },
-    #     api_key=wallet.inkey,
-    # )
+    if tipjar.onchain_limit and (sats <= tipjar.onchain_limit):
+        tipjar.onchain = None
 
     name = data.name or "Anonymous"
     try:
