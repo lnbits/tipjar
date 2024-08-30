@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from lnbits.core.crud import get_user, get_wallet
 from lnbits.core.models import WalletTypeInfo
 from lnbits.decorators import require_admin_key
+from loguru import logger
 
 from .crud import (
     create_tip,
@@ -40,6 +41,7 @@ async def api_create_tipjar(data: CreateTipJar):
 @tipjar_api_router.post("/api/v1/tips")
 async def api_create_tip(data: CreateTips):
     """Public route to take data from tip form and return satspay charge"""
+    logger.debug(f"Creating tip with data: {data}")
     sats = int(data.sats)
     message = data.message
     if not message:
@@ -56,6 +58,8 @@ async def api_create_tip(data: CreateTips):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Tipjar wallet does not exist."
         )
+    logger.debug(f"Creating tip for wallet: {wallet}")
+    name = data.name or "Anonymous"
 
     name = data.name or "Anonymous"
     try:

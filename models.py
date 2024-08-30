@@ -33,6 +33,7 @@ class CreateTipJar(BaseModel):
     wallet: str
     webhook: Optional[str]
     onchain: Optional[str]
+    onchain_limit: Optional[int]
 
 
 class CreateTips(BaseModel):
@@ -50,6 +51,7 @@ class TipJar(BaseModel):
     wallet: str  # Lightning wallet
     onchain: Optional[str]  # Watchonly wallet
     webhook: Optional[str]  # URL to POST tips to
+    onchain_limit: Optional[int]  # Bellow this amount, tips will be offchain only
 
     @classmethod
     def from_row(cls, row: Row) -> "TipJar":

@@ -43,12 +43,13 @@ async def create_tipjar(data: CreateTipJar) -> TipJar:
             name,
             wallet,
             webhook,
-            onchain
+            onchain,
+            onchain_limit
         )
-        VALUES (?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?)
         {returning}
         """,
-        (data.name, data.wallet, data.webhook, data.onchain),
+        (data.name, data.wallet, data.webhook, data.onchain, data.onchain_limit),
     )
     if db.type == SQLITE:
         tipjar_id = result._result_proxy.lastrowid
