@@ -69,13 +69,13 @@
       }
     },
     methods: {
-      invoice: function () {
+      invoice() {
         axios
           .post('/tipjar/api/v1/tips', {
             tipjar: '{{ tipjar_id }}',
-            name: self.tipDialog.data.name,
-            sats: self.tipDialog.data.sats,
-            message: self.tipDialog.data.message
+            name: this.tipDialog.data.name,
+            sats: this.tipDialog.data.sats,
+            message: this.tipDialog.data.message
           })
           .then(response => {
             this.redirect_url = response.data.redirect_url
