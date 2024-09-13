@@ -2,6 +2,8 @@
   "name": "Tip Jar",
   "short_description": "Accept Bitcoin donations, with messages attached!",
   "tile": "/tipjar/static/image/tipjar.png",
-  "contributors": ["Fittiboy"],
-  "min_lnbits_version": "0.11.0"
+  "contributors": [
+    "Fittiboy"
+  ],
+  "min_lnbits_version": "1.0.0"
 }
