@@ -142,9 +142,7 @@ async def api_update_tip(
         )
 
     if tip.wallet != key_type.wallet.id:
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN, detail="Not your tip."
-        )
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Not your tip.")
 
     for k, v in data.dict().items():
         setattr(tip, k, v)
@@ -168,9 +166,7 @@ async def api_update_tipjar(
         )
 
     if tipjar.wallet != key_type.wallet.id:
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN, detail="Not your tipjar."
-        )
+        raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Not your tipjar.")
 
     for k, v in data.dict().items():
         setattr(tipjar, k, v)
