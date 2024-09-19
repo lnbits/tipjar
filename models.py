@@ -1,4 +1,3 @@
-from sqlite3 import Row
 from typing import Optional
 
 from pydantic import BaseModel
@@ -21,11 +20,7 @@ class Tip(BaseModel):
     name: str  # Name of the donor
     message: str  # Donation message
     sats: int
-    tipjar: int  # The ID of the corresponding tip jar
-
-    @classmethod
-    def from_row(cls, row: Row) -> "Tip":
-        return cls(**dict(row))
+    tipjar: str  # The ID of the corresponding tip jar
 
 
 class CreateTipJar(BaseModel):
@@ -46,13 +41,9 @@ class CreateTips(BaseModel):
 class TipJar(BaseModel):
     """A TipJar represents a user's tip jar"""
 
-    id: int
+    id: str
     name: str  # The name of the donatee
     wallet: str  # Lightning wallet
     onchain: Optional[str]  # Watchonly wallet
     webhook: Optional[str]  # URL to POST tips to
     onchain_limit: Optional[int]  # Bellow this amount, tips will be offchain only
-
-    @classmethod
-    def from_row(cls, row: Row) -> "TipJar":
-        return cls(**dict(row))

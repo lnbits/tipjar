@@ -32,3 +32,16 @@ async def m002_add_onchain_limit(db):
         ALTER TABLE tipjar.TipJars ADD COLUMN onchain_limit INTEGER;
         """
     )
+
+
+async def m003_tipjar_id_string(db):
+    await db.execute(
+        """
+        ALTER TABLE tipjar.TipJars ALTER COLUMN id TYPE TEXT;
+        """
+    )
+    await db.execute(
+        """
+        ALTER TABLE tipjar.Tips ALTER COLUMN tipjar TYPE TEXT;
+        """
+    )

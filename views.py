@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.templating import Jinja2Templates
 from lnbits.core.models import User
 from lnbits.decorators import check_user_exists
 from lnbits.helpers import template_renderer
@@ -9,7 +8,6 @@ from starlette.exceptions import HTTPException
 
 from .crud import get_tipjar
 
-templates = Jinja2Templates(directory="templates")
 tipjar_generic_router = APIRouter()
 
 
