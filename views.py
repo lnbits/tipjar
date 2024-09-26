@@ -23,7 +23,7 @@ async def index(request: Request, user: User = Depends(check_user_exists)):
 
 
 @tipjar_generic_router.get("/{tipjar_id}")
-async def tip(request: Request, tipjar_id: int):
+async def tip(request: Request, tipjar_id: str):
     """Return the donation form for the Tipjar corresponding to id"""
     tipjar = await get_tipjar(tipjar_id)
     if not tipjar:

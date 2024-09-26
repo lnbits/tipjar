@@ -44,7 +44,7 @@ async def api_create_tip(data: CreateTips):
     message = data.message
     if not message:
         message = "No message"
-    tipjar_id = int(data.tipjar)
+    tipjar_id = data.tipjar
     tipjar = await get_tipjar(tipjar_id)
     if not tipjar:
         raise HTTPException(
@@ -153,7 +153,7 @@ async def api_update_tip(
 
 @tipjar_api_router.put("/api/v1/tipjars/{tipjar_id}")
 async def api_update_tipjar(
-    tipjar_id: int,
+    tipjar_id: str,
     data: CreateTipJar,
     key_type: WalletTypeInfo = Depends(require_admin_key),
 ) -> TipJar:
@@ -203,7 +203,7 @@ async def api_delete_tip(
 
 @tipjar_api_router.delete("/api/v1/tipjars/{tipjar_id}")
 async def api_delete_tipjar(
-    tipjar_id: int, key_type: WalletTypeInfo = Depends(require_admin_key)
+    tipjar_id: str, key_type: WalletTypeInfo = Depends(require_admin_key)
 ):
     """Delete the tipjar with the given tipjar_id"""
     tipjar = await get_tipjar(tipjar_id)

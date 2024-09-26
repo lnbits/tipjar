@@ -7,7 +7,7 @@ class CreateTip(BaseModel):
     id: str
     wallet: str
     sats: int
-    tipjar: int
+    tipjar: str
     name: str = "Anonymous"
     message: str = ""
 
@@ -40,4 +40,5 @@ class CreateTipJar(BaseModel):
 
 class TipJar(CreateTipJar):
     """A TipJar represents a user's tip jar"""
+
     id: str
