@@ -18,7 +18,7 @@ def tipjar_renderer():
 @tipjar_generic_router.get("/")
 async def index(request: Request, user: User = Depends(check_user_exists)):
     return tipjar_renderer().TemplateResponse(
-        "tipjar/index.html", {"request": request, "user": user.dict()}
+        "tipjar/index.html", {"request": request, "user": user.json()}
     )
 
 
