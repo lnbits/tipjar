@@ -49,5 +49,8 @@
 </div>
 
 {% endblock %} {% block scripts %}
+<script>
+  const tipjarId = '{{ tipjar_id }}'
+</script>
 <script src="{{ static_url_for('tipjar/static', 'js/display.js') }}"></script>
 {% endblock %}

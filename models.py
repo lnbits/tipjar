@@ -23,14 +23,6 @@ class Tip(BaseModel):
     tipjar: str  # The ID of the corresponding tip jar
 
 
-class CreateTipJar(BaseModel):
-    name: str
-    wallet: str
-    webhook: Optional[str]
-    onchain: Optional[str]
-    onchain_limit: Optional[int]
-
-
 class CreateTips(BaseModel):
     name: str
     sats: str
@@ -38,12 +30,14 @@ class CreateTips(BaseModel):
     message: str
 
 
-class TipJar(BaseModel):
-    """A TipJar represents a user's tip jar"""
+class CreateTipJar(BaseModel):
+    name: str
+    wallet: str
+    webhook: Optional[str] = ""
+    onchain: Optional[str] = ""
+    onchain_limit: Optional[int] = 0
 
+
+class TipJar(CreateTipJar):
+    """A TipJar represents a user's tip jar"""
     id: str
-    name: str  # The name of the donatee
-    wallet: str  # Lightning wallet
-    onchain: Optional[str]  # Watchonly wallet
-    webhook: Optional[str]  # URL to POST tips to
-    onchain_limit: Optional[int]  # Bellow this amount, tips will be offchain only

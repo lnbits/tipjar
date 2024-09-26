@@ -5,6 +5,7 @@ window.app = Vue.createApp({
     return {
       paymentReq: null,
       redirectUrl: null,
+      tipjarId: tipjarId,
       tipDialog: {
         show: false,
         data: {
@@ -25,7 +26,7 @@ window.app = Vue.createApp({
           {
             name: this.tipDialog.data.name,
             sats: this.tipDialog.data.sats,
-            tipjar: '{{ tipjar_id }}',
+            tipjar: this.tipjarId,
             message: this.tipDialog.data.message
           }
         )

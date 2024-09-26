@@ -1,5 +1,5 @@
 const mapTipJar = function (obj) {
-  obj.date = Quasar.utils.date.formatDate(
+  obj.date = Quasar.date.formatDate(
     new Date(obj.time * 1000),
     'YYYY-MM-DD HH:mm'
   )
@@ -99,7 +99,6 @@ window.app = Vue.createApp({
           this.g.user.wallets[0].inkey
         )
         .then(function (response) {
-          console.log(response.data)
           for (i = 0; i < response.data.length; i++) {
             self.walletLinks.push(response.data[i].id)
           }

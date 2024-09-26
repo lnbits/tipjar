@@ -1,4 +1,7 @@
-async def m001_initial(db):
+from lnbits.db import Database
+
+
+async def m001_initial(db: Database):
     await db.execute(
         f"""
         CREATE TABLE IF NOT EXISTS tipjar.TipJars (
@@ -26,7 +29,7 @@ async def m001_initial(db):
     )
 
 
-async def m002_add_onchain_limit(db):
+async def m002_add_onchain_limit(db: Database):
     await db.execute(
         """
         ALTER TABLE tipjar.TipJars ADD COLUMN onchain_limit INTEGER;
@@ -34,7 +37,7 @@ async def m002_add_onchain_limit(db):
     )
 
 
-async def m003_tipjar_id_string(db):
+async def m003_tipjar_id_string(db: Database):
     await db.execute(
         """
         ALTER TABLE tipjar.TipJars ALTER COLUMN id TYPE TEXT;

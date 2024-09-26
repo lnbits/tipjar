@@ -25,17 +25,16 @@
         <q-table
           dense
           flat
-          :data="tipjars"
+          :rows="tipjars"
           row-key="id"
           :columns="tipjarsTable.columns"
-          :pagination.sync="tipjarsTable.pagination"
+          v-model:pagination="tipjarsTable.pagination"
         >
-          {% raw %}
           <template v-slot:header="props">
             <q-tr :props="props">
               <q-th auto-width></q-th>
               <q-th v-for="col in props.cols" :key="col.name" :props="props">
-                {{ col.label }}
+                  <span v-text="col.label"></span>
               </q-th>
               <q-th auto-width></q-th>
             </q-tr>
@@ -55,7 +54,7 @@
                 ></q-btn>
               </q-td>
               <q-td v-for="col in props.cols" :key="col.name" :props="props">
-                {{ col.value }}
+                <span v-text="col.value"></span>
               </q-td>
               <q-td auto-width>
                 <q-btn
@@ -69,7 +68,6 @@
               </q-td>
             </q-tr>
           </template>
-          {% endraw %}
         </q-table>
       </q-card-section>
     </q-card>
@@ -89,9 +87,9 @@
         <q-table
           dense
           flat
-          :data="tips"
+          :rows="tips"
           :columns="tipsTable.columns"
-          :pagination.sync="tipsTable.pagination"
+          v-model:pagination="tipsTable.pagination"
         >
           {% raw %}
           <template v-slot:header="props">
