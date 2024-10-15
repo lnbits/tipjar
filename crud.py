@@ -21,15 +21,16 @@ async def create_tipjar(data: CreateTipJar) -> TipJar:
         id=urlsafe_short_hash(),
         **data.dict(),
     )
-    await db.insert("tipjar.tipjar", tipjar) # type: ignore
+    await db.insert("tipjar.tipjar", tipjar)  # type: ignore
     return tipjar
 
 
 async def get_tipjar(tipjar_id: str) -> Optional[TipJar]:
     """Return a tipjar by ID"""
     return await db.fetchone(
-        "SELECT * FROM tipjar.tipjar WHERE id = :id", {"id": tipjar_id},
-        TipJar, # type: ignore
+        "SELECT * FROM tipjar.tipjar WHERE id = :id",
+        {"id": tipjar_id},
+        TipJar,  # type: ignore
     )
 
 
@@ -38,7 +39,7 @@ async def get_tipjars(wallet_id: str) -> Optional[list]:
     return await db.fetchall(
         "SELECT * FROM tipjar.tipjar WHERE wallet = :wallet_id",
         {"wallet_id": wallet_id},
-        TipJar, # type: ignore
+        TipJar,  # type: ignore
     )
 
 
@@ -53,24 +54,27 @@ async def delete_tipjar(tipjar_id: str) -> None:
 async def get_tip(tip_id: str) -> Optional[Tip]:
     """Return a Tip"""
     return await db.fetchone(
-        "SELECT * FROM tipjar.tip WHERE id = :id", {"id": tip_id},
-        Tip, # type: ignore
+        "SELECT * FROM tipjar.tip WHERE id = :id",
+        {"id": tip_id},
+        Tip,  # type: ignore
     )
 
 
 async def get_tipjar_tips(tipjar_id: str) -> list[Tip]:
     """Return all Tips for a tipjar"""
     return await db.fetchall(
-        "SELECT * FROM tipjar.tip WHERE tipjar = :tipjar_id", {"tipjar_id": tipjar_id},
-        Tip, # type: ignore
+        "SELECT * FROM tipjar.tip WHERE tipjar = :tipjar_id",
+        {"tipjar_id": tipjar_id},
+        Tip,  # type: ignore
     )
 
 
 async def get_tips(wallet_id: str) -> list[Tip]:
     """Return all Tips assigned to wallet_id"""
     return await db.fetchall(
-        "SELECT * FROM tipjar.tip WHERE wallet = :wallet_id", {"wallet_id": wallet_id},
-        Tip, # type: ignore
+        "SELECT * FROM tipjar.tip WHERE wallet = :wallet_id",
+        {"wallet_id": wallet_id},
+        Tip,  # type: ignore
     )
 
 
@@ -81,11 +85,11 @@ async def delete_tip(tip_id: str) -> None:
 
 async def update_tip(tip: Tip) -> Tip:
     """Update a Tip"""
-    await db.update("tipjar.tip", tip) # type: ignore
+    await db.update("tipjar.tip", tip)  # type: ignore
     return tip
 
 
 async def update_tipjar(tipjar: TipJar) -> TipJar:
     """Update a tipjar"""
-    await db.update("tipjar.tipjar", tipjar) # type: ignore
+    await db.update("tipjar.tipjar", tipjar)  # type: ignore
     return tipjar
