@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException
-from lnbits.core.crud import get_user_by_id, get_wallet
+from lnbits.core.crud import get_user, get_wallet
 from lnbits.core.models import WalletTypeInfo
 from lnbits.decorators import require_admin_key, require_invoice_key
 
@@ -102,7 +102,7 @@ async def api_get_tipjars(
     key_type: WalletTypeInfo = Depends(require_invoice_key),
 ) -> list[TipJar]:
     """Return list of all tipjars assigned to wallet with given invoice key"""
-    user = await get_user_by_id(key_type.wallet.user)
+    user = await get_user(key_type.wallet.user)
     if not user:
         return []
     tipjars = []
@@ -117,7 +117,7 @@ async def api_get_tips(
     key_type: WalletTypeInfo = Depends(require_invoice_key),
 ) -> list[Tip]:
     """Return list of all tips assigned to wallet with given invoice key"""
-    user = await get_user_by_id(key_type.wallet.user)
+    user = await get_user(key_type.wallet.user)
     if not user:
         return []
     tips = []
