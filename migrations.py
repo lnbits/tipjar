@@ -58,7 +58,7 @@ async def m003_tipjar_id_string_rename_tables(db: Database):
         FROM tipjar.TipJars;
         """
     )
-    
+
     await db.execute(
         f"""
         CREATE TABLE IF NOT EXISTS tipjar.tip (
