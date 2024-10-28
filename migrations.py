@@ -58,7 +58,7 @@ async def m003_tipjar_id_string_rename_tables(db: Database):
         FROM tipjar.TipJars;
         """
     )
-    await db.execute("DROP TABLE tipjar.TipJars;")
+
     await db.execute(
         f"""
         CREATE TABLE IF NOT EXISTS tipjar.tip (
@@ -67,8 +67,7 @@ async def m003_tipjar_id_string_rename_tables(db: Database):
             wallet TEXT NOT NULL,
             name TEXT NOT NULL,
             message TEXT NOT NULL,
-            sats {db.big_int} NOT NULL,
-            FOREIGN KEY(tipjar) REFERENCES {db.references_schema}tipjar(id)
+            sats {db.big_int} NOT NULL
         );
         """
     )
@@ -80,3 +79,4 @@ async def m003_tipjar_id_string_rename_tables(db: Database):
         """
     )
     await db.execute("DROP TABLE tipjar.Tips;")
+    await db.execute("DROP TABLE tipjar.TipJars;")
