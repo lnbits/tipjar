@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import RedirectResponse
 from lnbits.core.crud import get_user, get_wallet
 from lnbits.core.models import WalletTypeInfo
 from lnbits.decorators import require_admin_key, require_invoice_key
@@ -109,7 +108,7 @@ async def api_create_tip(data: CreateTips) -> dict:
     )
 
     await create_tip(tip)
-    return { "redirect_url": f"/satspay/{charge_id}" }
+    return {"redirect_url": f"/satspay/{charge_id}"}
 
 
 @tipjar_api_router.get("/api/v1/tipjars")
