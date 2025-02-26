@@ -18,15 +18,23 @@ from .crud import (
     update_tip,
     update_tipjar,
 )
-from .helpers import create_charge, delete_charge
+from .helpers import check_satspay, create_charge, delete_charge
 from .models import CreateTip, CreateTipJar, CreateTips, Tip, TipJar
 
 tipjar_api_router = APIRouter()
 
 
 @tipjar_api_router.post("/api/v1/tipjars")
-async def api_create_tipjar(data: CreateTipJar) -> TipJar:
+async def api_create_tipjar(
+    data: CreateTipJar,
+    key_type: WalletTypeInfo = Depends(require_admin_key),
+) -> TipJar:
     """Create a tipjar, which holds data about how/where to post tips"""
+    if not await check_satspay(key_type.wallet.adminkey):
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail="SatsPay is not enabled.",
+        )
     try:
         tipjar = await create_tipjar(data)
     except Exception as exc:
@@ -38,8 +46,9 @@ async def api_create_tipjar(data: CreateTipJar) -> TipJar:
 
 
 @tipjar_api_router.post("/api/v1/tips")
-async def api_create_tip(data: CreateTips):
+async def api_create_tip(data: CreateTips) -> dict:
     """Public route to take data from tip form and return satspay charge"""
+
     sats = int(data.sats)
     message = data.message
     if not message:
@@ -56,11 +65,17 @@ async def api_create_tip(data: CreateTips):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail="Tipjar wallet does not exist."
         )
+    if not await check_satspay(wallet.adminkey):
+        raise HTTPException(
+            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
+            detail="SatsPay is not enabled.",
+        )
 
     if tipjar.onchain_limit and (sats <= tipjar.onchain_limit):
         tipjar.onchain = None
 
     name = data.name or "Anonymous"
+
     try:
         charge_id = await create_charge(
             data={
@@ -93,7 +108,6 @@ async def api_create_tip(data: CreateTips):
     )
 
     await create_tip(tip)
-
     return {"redirect_url": f"/satspay/{charge_id}"}
 
 
