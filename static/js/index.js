@@ -97,7 +97,7 @@ window.app = Vue.createApp({
           '/watchonly/api/v1/wallet',
           this.g.user.wallets[0].inkey
         )
-        .then((response) => {
+        .then(response => {
           for (i = 0; i < response.data.length; i++) {
             this.walletLinks.push(response.data[i].id)
           }
@@ -108,8 +108,8 @@ window.app = Vue.createApp({
     getTips() {
       LNbits.api
         .request('GET', '/tipjar/api/v1/tips', this.g.user.wallets[0].adminkey)
-        .then((response) => {
-          this.tips = response.data.map((obj) => {
+        .then(response => {
+          this.tips = response.data.map(obj => {
             return mapTipJar(obj)
           })
         })
@@ -126,8 +126,8 @@ window.app = Vue.createApp({
               '/tipjar/api/v1/tips/' + tipId,
               _.findWhere(this.g.user.wallets, {id: tips.wallet}).adminkey
             )
-            .then((response) => {
-              this.tips = _.reject(this.tips, (obj) => {
+            .then(response => {
+              this.tips = _.reject(this.tips, obj => {
                 return obj.id == tipId
               })
             })
@@ -145,8 +145,8 @@ window.app = Vue.createApp({
           '/tipjar/api/v1/tipjars',
           this.g.user.wallets[0].adminkey
         )
-        .then((response) => {
-          this.tipjars = response.data.map((obj) => {
+        .then(response => {
+          this.tipjars = response.data.map(obj => {
             return mapTipJar(obj)
           })
         })
@@ -163,7 +163,7 @@ window.app = Vue.createApp({
     createTipJar(wallet, data) {
       LNbits.api
         .request('POST', '/tipjar/api/v1/tipjars', wallet.adminkey, data)
-        .then((response) => {
+        .then(response => {
           this.tipjars.push(mapTipJar(response.data))
           this.tipjarDialog.show = false
           this.tipjarDialog.data = {}
@@ -193,8 +193,8 @@ window.app = Vue.createApp({
               '/tipjar/api/v1/tipjars/' + tipjarsId,
               _.findWhere(this.g.user.wallets, {id: tipjars.wallet}).adminkey
             )
-            .then((response) => {
-              this.tipjars = _.reject(this.tipjars, (obj) => {
+            .then(response => {
+              this.tipjars = _.reject(this.tipjars, obj => {
                 return obj.id == tipjarsId
               })
             })
@@ -209,7 +209,8 @@ window.app = Vue.createApp({
         this.hasSatsPay = false
         Quasar.Notify.create({
           type: 'negative',
-          message: 'You need to install and enable the SatsPay extension to use TipJar.'
+          message:
+            'You need to install and enable the SatsPay extension to use TipJar.'
         })
       }
     }

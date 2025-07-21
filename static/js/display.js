@@ -40,7 +40,7 @@ window.app = Vue.createApp({
           }
           this.$q.notify({
             type: 'negative',
-            message: "Something went wrong! Contact the TipJar owner.",
+            message: 'Something went wrong! Contact the TipJar owner.',
             caption: detail
           })
         } else {
