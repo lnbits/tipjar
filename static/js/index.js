@@ -90,102 +90,88 @@ window.app = Vue.createApp({
     }
   },
   methods: {
-    getWalletLinks: function () {
-      var self = this
-
+    getWalletLinks() {
       LNbits.api
         .request(
           'GET',
           '/watchonly/api/v1/wallet',
           this.g.user.wallets[0].inkey
         )
-        .then(function (response) {
+        .then((response) => {
           for (i = 0; i < response.data.length; i++) {
-            self.walletLinks.push(response.data[i].id)
+            this.walletLinks.push(response.data[i].id)
           }
           return
         })
-        .catch(function (error) {
-          LNbits.utils.notifyApiError(error)
-        })
+        .catch(LNbits.utils.notifyApiError)
     },
-    getTips: function () {
-      var self = this
-
+    getTips() {
       LNbits.api
         .request('GET', '/tipjar/api/v1/tips', this.g.user.wallets[0].adminkey)
-        .then(function (response) {
-          self.tips = response.data.map(function (obj) {
+        .then((response) => {
+          this.tips = response.data.map((obj) => {
             return mapTipJar(obj)
           })
         })
     },
-    deleteTip: function (tipId) {
-      var self = this
-      var tips = _.findWhere(this.tips, {id: tipId})
+    deleteTip(tipId) {
+      const tips = _.findWhere(this.tips, {id: tipId})
 
       LNbits.utils
         .confirmDialog('Are you sure you want to delete this tip?')
-        .onOk(function () {
+        .onOk(() => {
           LNbits.api
             .request(
               'DELETE',
               '/tipjar/api/v1/tips/' + tipId,
-              _.findWhere(self.g.user.wallets, {id: tips.wallet}).adminkey
+              _.findWhere(this.g.user.wallets, {id: tips.wallet}).adminkey
             )
-            .then(function (response) {
-              self.tips = _.reject(self.tips, function (obj) {
-                return obj.id == ticketId
+            .then((response) => {
+              this.tips = _.reject(this.tips, (obj) => {
+                return obj.id == tipId
               })
             })
-            .catch(function (error) {
-              LNbits.utils.notifyApiError(error)
-            })
+            .catch(LNbits.utils.notifyApiError)
         })
     },
-    exporttipsCSV: function () {
+    exporttipsCSV() {
       LNbits.utils.exportCSV(this.tipsTable.columns, this.tips)
     },
 
-    getTipJars: function () {
-      var self = this
-
+    getTipJars() {
       LNbits.api
         .request(
           'GET',
           '/tipjar/api/v1/tipjars',
           this.g.user.wallets[0].adminkey
         )
-        .then(function (response) {
-          self.tipjars = response.data.map(function (obj) {
+        .then((response) => {
+          this.tipjars = response.data.map((obj) => {
             return mapTipJar(obj)
           })
         })
     },
-    sendTipJarData: function () {
-      var wallet = _.findWhere(this.g.user.wallets, {
+    sendTipJarData() {
+      const wallet = _.findWhere(this.g.user.wallets, {
         id: this.tipjarDialog.data.wallet
       })
-      var data = this.tipjarDialog.data
+      const data = this.tipjarDialog.data
 
       this.createTipJar(wallet, data)
     },
 
-    createTipJar: function (wallet, data) {
-      var self = this
+    createTipJar(wallet, data) {
       LNbits.api
         .request('POST', '/tipjar/api/v1/tipjars', wallet.adminkey, data)
-        .then(function (response) {
-          self.tipjars.push(mapTipJar(response.data))
-          self.tipjarDialog.show = false
-          self.tipjarDialog.data = {}
+        .then((response) => {
+          this.tipjars.push(mapTipJar(response.data))
+          this.tipjarDialog.show = false
+          this.tipjarDialog.data = {}
         })
-        .catch(function (error) {
-          LNbits.utils.notifyApiError(error)
-        })
+        .catch(LNbits.utils.notifyApiError)
     },
-    updatetipjarDialog: function (tipjarId) {
-      var link = _.findWhere(this.tipjars, {id: tipjarId})
+    updatetipjarDialog(tipjarId) {
+      const link = _.findWhere(this.tipjars, {id: tipjarId})
 
       this.tipjarDialog.data.id = link.id
       this.tipjarDialog.data.wallet = link.wallet
@@ -195,31 +181,29 @@ window.app = Vue.createApp({
       this.tipjarDialog.chain = link.onchain != null
       this.tipjarDialog.show = true
     },
-    deleteTipJar: function (tipjarsId) {
-      var self = this
-      var tipjars = _.findWhere(this.tipjars, {id: tipjarsId})
+    deleteTipJar(tipjarsId) {
+      const tipjars = _.findWhere(this.tipjars, {id: tipjarsId})
 
       LNbits.utils
         .confirmDialog('Are you sure you want to delete this tipjar link?')
-        .onOk(function () {
+        .onOk(() => {
           LNbits.api
             .request(
               'DELETE',
               '/tipjar/api/v1/tipjars/' + tipjarsId,
-              _.findWhere(self.g.user.wallets, {id: tipjars.wallet}).adminkey
+              _.findWhere(this.g.user.wallets, {id: tipjars.wallet}).adminkey
             )
-            .then(function (response) {
-              self.tipjars = _.reject(self.tipjars, function (obj) {
+            .then((response) => {
+              this.tipjars = _.reject(this.tipjars, (obj) => {
                 return obj.id == tipjarsId
               })
             })
-            .catch(function (error) {
-              LNbits.utils.notifyApiError(error)
-            })
+            .catch(LNbits.utils.notifyApiError)
         })
     },
-    exporttipjarsCSV: function () {
+    exporttipjarsCSV() {
       LNbits.utils.exportCSV(this.tipjarsTable.columns, this.tipjars)
+    },
     checkSatsPay() {
       if (!this.g.user.extensions.includes('satspay')) {
         this.hasSatsPay = false
@@ -231,13 +215,12 @@ window.app = Vue.createApp({
     }
   },
 
-  created: function () {
+  created() {
     this.checkSatsPay()
     if (this.g.user.wallets.length && this.hasSatsPay) {
       this.getWalletLinks()
       this.getTipJars()
       this.getTips()
-      // this.getServices()
     }
   }
 })
