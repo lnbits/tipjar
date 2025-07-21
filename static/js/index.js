@@ -16,6 +16,7 @@ window.app = Vue.createApp({
       tipjars: [],
       tips: [],
       walletLinks: [],
+      hasSatsPay: true,
       tipjarsTable: {
         columns: [
           {
@@ -219,11 +220,20 @@ window.app = Vue.createApp({
     },
     exporttipjarsCSV: function () {
       LNbits.utils.exportCSV(this.tipjarsTable.columns, this.tipjars)
+    checkSatsPay() {
+      if (!this.g.user.extensions.includes('satspay')) {
+        this.hasSatsPay = false
+        Quasar.Notify.create({
+          type: 'negative',
+          message: 'You need to install and enable the SatsPay extension to use TipJar.'
+        })
+      }
     }
   },
 
   created: function () {
-    if (this.g.user.wallets.length) {
+    this.checkSatsPay()
+    if (this.g.user.wallets.length && this.hasSatsPay) {
       this.getWalletLinks()
       this.getTipJars()
       this.getTips()
