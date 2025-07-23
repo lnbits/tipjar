@@ -33,7 +33,19 @@ window.app = Vue.createApp({
         this.redirectUrl = data.redirect_url
         window.location.href = this.redirectUrl
       } catch (error) {
-        LNbits.utils.notifyApiError(error)
+        let detail = error?.response?.data?.detail
+        if (detail) {
+          if (typeof detail === 'object') {
+            detail = JSON.stringify(detail)
+          }
+          this.$q.notify({
+            type: 'negative',
+            message: 'Something went wrong! Contact the TipJar owner.',
+            caption: detail
+          })
+        } else {
+          LNbits.utils.notifyApiError(error)
+        }
       }
     }
   }

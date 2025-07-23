@@ -4,7 +4,11 @@
   <div class="col-12 col-md-8 col-lg-7 q-gutter-y-md">
     <q-card>
       <q-card-section>
-        <q-btn unelevated color="primary" @click="tipjarDialog.show = true"
+        <q-btn
+          unelevated
+          color="primary"
+          @click="tipjarDialog.show = true"
+          :disable="!hasSatsPay"
           >New TipJar</q-btn
         >
       </q-card-section>
