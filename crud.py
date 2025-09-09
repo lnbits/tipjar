@@ -1,5 +1,3 @@
-from typing import Optional
-
 from lnbits.db import Database
 from lnbits.helpers import urlsafe_short_hash
 
@@ -25,7 +23,7 @@ async def create_tipjar(data: CreateTipJar) -> TipJar:
     return tipjar
 
 
-async def get_tipjar(tipjar_id: str) -> Optional[TipJar]:
+async def get_tipjar(tipjar_id: str) -> TipJar | None:
     """Return a tipjar by ID"""
     return await db.fetchone(
         "SELECT * FROM tipjar.tipjar WHERE id = :id",
@@ -34,7 +32,7 @@ async def get_tipjar(tipjar_id: str) -> Optional[TipJar]:
     )
 
 
-async def get_tipjars(wallet_id: str) -> Optional[list]:
+async def get_tipjars(wallet_id: str) -> list | None:
     """Return all TipJars belonging assigned to the wallet_id"""
     return await db.fetchall(
         "SELECT * FROM tipjar.tipjar WHERE wallet = :wallet_id",
@@ -51,7 +49,7 @@ async def delete_tipjar(tipjar_id: str) -> None:
     await db.execute("DELETE FROM tipjar.tipjar WHERE id = :id", {"id": tipjar_id})
 
 
-async def get_tip(tip_id: str) -> Optional[Tip]:
+async def get_tip(tip_id: str) -> Tip | None:
     """Return a Tip"""
     return await db.fetchone(
         "SELECT * FROM tipjar.tip WHERE id = :id",
