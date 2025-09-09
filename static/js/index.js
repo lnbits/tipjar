@@ -197,6 +197,7 @@ window.app = Vue.createApp({
               this.tipjars = _.reject(this.tipjars, obj => {
                 return obj.id == tipjarsId
               })
+              this.getTips()
             })
             .catch(LNbits.utils.notifyApiError)
         })
