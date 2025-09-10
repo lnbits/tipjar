@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 
@@ -33,9 +31,9 @@ class CreateTips(BaseModel):
 class CreateTipJar(BaseModel):
     name: str
     wallet: str
-    webhook: Optional[str] = ""
-    onchain: Optional[str] = ""
-    onchain_limit: Optional[int] = 0
+    webhook: str | None = ""
+    onchain: str | None = ""
+    onchain_limit: int | None = 0
 
 
 class TipJar(CreateTipJar):
