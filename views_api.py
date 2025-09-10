@@ -233,7 +233,7 @@ async def api_delete_tipjar(
 
     tips = await get_tipjar_tips(tipjar_id)
     for tip in tips:
-        await delete_charge(tip.id, key_type.wallet.inkey)
+        await delete_charge(tip.id, key_type.wallet.adminkey)
 
     await delete_tipjar(tipjar_id)
 
