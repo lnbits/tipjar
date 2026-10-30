@@ -23,7 +23,7 @@ class Tip(BaseModel):
 
 class CreateTips(BaseModel):
     name: str
-    sats: str
+    sats: int
     tipjar: str
     message: str
 
