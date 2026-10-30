@@ -17,7 +17,7 @@ async def create_tipjar(data: CreateTipJar) -> TipJar:
 
     tipjar = TipJar(
         id=urlsafe_short_hash(),
-        **data.dict(),
+        **data.model_dump(),
     )
     await db.insert("tipjar.tipjar", tipjar)
     return tipjar

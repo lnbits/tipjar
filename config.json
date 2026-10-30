@@ -1,6 +1,6 @@
 {
   "id": "tipjar",
-  "version": "1.0.2",
+  "version": "1.1.1",
   "name": "Tip Jar",
   "repo": "https://github.com/lnbits/tipjar",
   "short_description": "Accept Bitcoin donations, with optional messages attached!",
@@ -28,6 +28,7 @@
       "uri": "https://raw.githubusercontent.com/lnbits/tipjar/main/static/image/4.png"
     }
   ],
+  "min_lnbits_version": "1.7.0-rc1",
   "description_md": "https://raw.githubusercontent.com/lnbits/tipjar/main/description.md",
   "terms_and_conditions_md": "https://raw.githubusercontent.com/lnbits/tipjar/main/toc.md",
   "license": "MIT",
