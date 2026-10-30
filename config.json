@@ -1,10 +1,11 @@
 {
   "id": "tipjar",
   "name": "Tip Jar",
+  "version": "1.1.0",
   "short_description": "Accept Bitcoin donations, with messages attached!",
   "tile": "/tipjar/static/image/tipjar.png",
   "contributors": ["Fittiboy"],
-  "min_lnbits_version": "1.0.0",
+  "min_lnbits_version": "1.7.0-rc1",
   "images": [],
   "description_md": "https://raw.githubusercontent.com/lnbits/tipjar/main/description.md",
   "terms_and_conditions_md": "https://raw.githubusercontent.com/lnbits/tipjar/main/toc.md",
