@@ -16,6 +16,8 @@ window.app = Vue.createApp({
       tipjars: [],
       tips: [],
       walletLinks: [],
+      coreOnchainWallets: [],
+      loadingOnchainWallets: false,
       hasSatsPay: true,
       tipjarsTable: {
         columns: [
@@ -40,7 +42,7 @@ window.app = Vue.createApp({
           {
             name: 'onchain address',
             align: 'left',
-            label: 'Onchain Address',
+            label: 'Onchain Wallet',
             field: 'onchain'
           },
           {
@@ -89,21 +91,114 @@ window.app = Vue.createApp({
       }
     }
   },
+  computed: {
+    editingTipjar() {
+      return this.tipjars.find(jar => jar.id === this.tipjarDialog.data.id)
+    },
+    lightningWalletOptions() {
+      const walletIds = this.g.user.wallets
+        .filter(wallet => wallet.canReceivePayments)
+        .map(wallet => wallet.id)
+      return this.g.user.walletOptions.filter(wallet =>
+        walletIds.includes(wallet.value)
+      )
+    },
+    onchainWalletOptions() {
+      const core = this.coreOnchainWallets.map(wallet => ({
+        label: `LNbits: ${wallet.name}${wallet.status === 'ready' ? '' : ' (Not ready)'}`,
+        value: `core:${wallet.id}`
+      }))
+      const watchonly = this.walletLinks.map(wallet => ({
+        label: `Watchonly: ${wallet.title || wallet.id}`,
+        value: wallet.id
+      }))
+      return [...core, ...watchonly]
+    },
+    selectedCoreWallet() {
+      const reference = this.tipjarDialog.data.onchain
+      if (!reference?.startsWith('core:')) return null
+      return (
+        this.coreOnchainWallets.find(w => w.id === reference.slice(5)) || null
+      )
+    },
+    hasCoreOnchainWallet() {
+      return this.g.user.wallets.some(wallet => wallet.walletType === 'onchain')
+    },
+    onchainSelectionInvalid() {
+      if (!this.tipjarDialog.chain) return false
+      const reference = this.tipjarDialog.data.onchain
+      if (reference && reference === this.editingTipjar?.onchain) return false
+      return (
+        !this.onchainWalletOptions.some(option => option.value === reference) ||
+        (reference?.startsWith('core:') &&
+          this.selectedCoreWallet?.status !== 'ready')
+      )
+    }
+  },
   methods: {
-    getWalletLinks() {
-      LNbits.api
-        .request(
+    async getWalletLinks() {
+      if (this.loadingOnchainWallets) return
+      this.loadingOnchainWallets = true
+      this.walletLinks = []
+      this.coreOnchainWallets = []
+      const inkey = this.g.user.wallets[0].inkey
+      try {
+        const {
+          data: {network}
+        } = await LNbits.api.request('GET', '/satspay/api/v1/settings/public')
+        const core = LNbits.api
+          .request('GET', '/satspay/api/v1/onchain-wallets', inkey)
+          .then(({data}) => {
+            this.coreOnchainWallets = data.filter(
+              wallet => wallet.network === network
+            )
+          })
+          .catch(LNbits.utils.notifyApiError)
+        if (this.g.user.extensions.includes('watchonly')) {
+          await Promise.all([core, this.getWatchonlyWallets(network, inkey)])
+        } else {
+          await core
+        }
+      } catch (error) {
+        LNbits.utils.notifyApiError(error)
+      } finally {
+        this.loadingOnchainWallets = false
+      }
+    },
+    async getWatchonlyWallets(network, inkey) {
+      try {
+        const {data: config} = await LNbits.api.request(
           'GET',
-          '/watchonly/api/v1/wallet',
-          this.g.user.wallets[0].inkey
+          '/watchonly/api/v1/config',
+          inkey
         )
-        .then(response => {
-          for (i = 0; i < response.data.length; i++) {
-            this.walletLinks.push(response.data[i].id)
-          }
+        if (config.network !== network) {
+          this.$q.notify({
+            type: 'warning',
+            message: `Watchonly must use the SatsPay network (${network}).`
+          })
           return
-        })
-        .catch(LNbits.utils.notifyApiError)
+        }
+        const {data} = await LNbits.api.request(
+          'GET',
+          `/watchonly/api/v1/wallet?network=${encodeURIComponent(network)}`,
+          inkey
+        )
+        this.walletLinks = data
+      } catch (error) {
+        LNbits.utils.notifyApiError(error)
+      }
+    },
+    createOnchainWallet() {
+      this.g.newWalletType = 'onchain'
+    },
+    openOnchainWallet(walletId) {
+      this.$router.push({path: '/wallet', query: {wal: walletId}})
+    },
+    openTipjarDialog() {
+      this.tipjarDialog.data = {}
+      this.tipjarDialog.chain = false
+      this.tipjarDialog.show = true
     },
     getTips() {
       LNbits.api
@@ -152,19 +247,30 @@ window.app = Vue.createApp({
         })
     },
     sendTipJarData() {
+      if (this.onchainSelectionInvalid) return
       const wallet = _.findWhere(this.g.user.wallets, {
-        id: this.tipjarDialog.data.wallet
+        id: this.editingTipjar?.wallet || this.tipjarDialog.data.wallet
       })
-      const data = this.tipjarDialog.data
-
-      this.createTipJar(wallet, data)
-    },
-
-    createTipJar(wallet, data) {
-      LNbits.api
-        .request('POST', '/tipjar/api/v1/tipjars', wallet.adminkey, data)
+      const data = {
+        ...this.tipjarDialog.data,
+        onchain: this.tipjarDialog.chain ? this.tipjarDialog.data.onchain : null
+      }
+      return LNbits.api
+        .request(
+          data.id ? 'PUT' : 'POST',
+          '/tipjar/api/v1/tipjars' + (data.id ? `/${data.id}` : ''),
+          wallet.adminkey,
+          data
+        )
         .then(response => {
-          this.tipjars.push(mapTipJar(response.data))
+          const tipjar = mapTipJar(response.data)
+          if (data.id) {
+            this.tipjars = this.tipjars.map(jar =>
+              jar.id === data.id ? tipjar : jar
+            )
+          } else {
+            this.tipjars.push(tipjar)
+          }
           this.tipjarDialog.show = false
           this.tipjarDialog.data = {}
         })
@@ -173,13 +279,10 @@ window.app = Vue.createApp({
     updatetipjarDialog(tipjarId) {
       const link = _.findWhere(this.tipjars, {id: tipjarId})
 
-      this.tipjarDialog.data.id = link.id
-      this.tipjarDialog.data.wallet = link.wallet
-      this.tipjarDialog.data.name = link.name
-      this.tipjarDialog.data.webhook = link.webhook
-      this.tipjarDialog.data.onchain_limit = link.onchain_limit
-      this.tipjarDialog.chain = link.onchain != null
+      this.tipjarDialog.data = {...link}
+      this.tipjarDialog.chain = Boolean(link.onchain)
       this.tipjarDialog.show = true
+      if (this.tipjarDialog.chain) this.getWalletLinks()
     },
     deleteTipJar(tipjarsId) {
       const tipjars = _.findWhere(this.tipjars, {id: tipjarsId})
@@ -220,7 +323,6 @@ window.app = Vue.createApp({
   created() {
     this.checkSatsPay()
     if (this.g.user.wallets.length && this.hasSatsPay) {
-      this.getWalletLinks()
       this.getTipJars()
       this.getTips()
     }

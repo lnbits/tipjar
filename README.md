@@ -23,6 +23,18 @@ The TipJar extension allows you to integrate Bitcoin Lightning (and on-chain) ti
 
 <h3>And that's it already! Let the sats flow!</h3>
 
+## Onchain wallets
+
+SatsPay is required for all tips. To accept onchain payments, select an LNbits
+onchain wallet or an existing Watchonly wallet when creating or editing a jar.
+LNbits wallets work without the Watchonly extension. Set up the wallet and, for a
+hot wallet, confirm its backup before receiving. Its network must match SatsPay.
+
+API clients use `onchain: "core:<wallet-id>"` for LNbits wallets; existing bare
+Watchonly IDs remain supported. Leave `onchain` empty to disable onchain payments.
+Tips at or below `onchain_limit` use Lightning only. SatsPay generates a fresh
+address and tracks each onchain payment; these tips do not credit a Lightning balance.
+
 ## Powered by LNbits
 
 [LNbits](https://lnbits.com) is a free and open-source lightning accounts system.
