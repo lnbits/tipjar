@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from lnbits.core.crud import get_user, get_wallet
 from lnbits.core.models import WalletTypeInfo
@@ -18,7 +19,7 @@ from .crud import (
     update_tip,
     update_tipjar,
 )
-from .helpers import check_satspay, create_charge, delete_charge
+from .helpers import check_satspay, create_charge, delete_charge, get_satspay_network
 from .models import CreateTip, CreateTipJar, CreateTips, Tip, TipJar
 
 tipjar_api_router = APIRouter()
@@ -30,6 +31,7 @@ async def api_create_tipjar(
     key_type: WalletTypeInfo = Depends(require_admin_key),
 ) -> TipJar:
     """Create a tipjar, which holds data about how/where to post tips"""
+    await _validate_tipjar_wallets(data, key_type.wallet.user)
     if not await check_satspay(key_type.wallet.adminkey):
         raise HTTPException(
             status_code=HTTPStatus.METHOD_NOT_ALLOWED,
@@ -71,8 +73,9 @@ async def api_create_tip(data: CreateTips) -> dict:
             detail="SatsPay is not enabled.",
         )
 
+    onchain = tipjar.onchain
     if tipjar.onchain_limit and (sats <= tipjar.onchain_limit):
-        tipjar.onchain = None
+        onchain = None
 
     name = data.name or "Anonymous"
 
@@ -83,7 +86,7 @@ async def api_create_tip(data: CreateTips) -> dict:
                 "webhook": tipjar.webhook or None,
                 "name": name,
                 "description": message,
-                "onchainwallet": tipjar.onchain or None,
+                "onchainwallet": onchain or None,
                 "lnbitswallet": tipjar.wallet,
                 "completelink": f"/tipjar/{tipjar_id}",
                 "completelinktext": "Thanks for the tip!",
@@ -93,9 +96,18 @@ async def api_create_tip(data: CreateTips) -> dict:
             api_key=wallet.inkey,
         )
     except Exception as exc:
-        msg = f"Failed to create charge: {exc!s}"
+        if (
+            isinstance(exc, httpx.HTTPStatusError)
+            and exc.response.status_code == HTTPStatus.BAD_REQUEST
+        ):
+            try:
+                detail = exc.response.json().get("detail")
+            except (ValueError, AttributeError):
+                detail = None
+            if isinstance(detail, str):
+                raise HTTPException(HTTPStatus.BAD_REQUEST, detail=detail) from exc
         raise HTTPException(
-            status_code=HTTPStatus.INTERNAL_SERVER_ERROR, detail=msg
+            status_code=HTTPStatus.BAD_GATEWAY, detail="Unable to create payment."
         ) from exc
 
     tip = Tip(
@@ -182,6 +194,7 @@ async def api_update_tipjar(
     if tipjar.wallet != key_type.wallet.id:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail="Not your tipjar.")
 
+    await _validate_tipjar_wallets(data, key_type.wallet.user, tipjar.onchain)
     for k, v in data.model_dump().items():
         setattr(tipjar, k, v)
     tipjar = await update_tipjar(tipjar)
@@ -238,3 +251,30 @@ async def api_delete_tipjar(
     await delete_tipjar(tipjar_id)
 
     return "", HTTPStatus.NO_CONTENT
+
+
+async def _validate_tipjar_wallets(
+    data: CreateTipJar, owner_id: str, saved_onchain: str | None = None
+) -> None:
+    user = await get_user(owner_id)
+    if not user or data.wallet not in user.wallet_ids:
+        raise HTTPException(HTTPStatus.FORBIDDEN, detail="Not your wallet.")
+    if not data.onchain or data.onchain == saved_onchain:
+        return
+    if not data.onchain.startswith("core:"):
+        return
+    wallet = user.get_wallet(data.onchain.removeprefix("core:"))
+    if not wallet or not wallet.is_onchain_wallet:
+        raise HTTPException(HTTPStatus.FORBIDDEN, detail="Not your onchain wallet.")
+
+    try:
+        network = await get_satspay_network()
+    except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(
+            HTTPStatus.BAD_GATEWAY, detail="Unable to load the SatsPay network."
+        ) from exc
+    if (wallet.onchain_network or "Mainnet") != network:
+        raise HTTPException(
+            HTTPStatus.BAD_REQUEST,
+            detail=f"Select an onchain wallet on the SatsPay network ({network}).",
+        )

@@ -2,6 +2,15 @@ import httpx
 from lnbits.settings import settings
 
 
+async def get_satspay_network() -> str:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"http://{settings.host}:{settings.port}/satspay/api/v1/settings/public"
+        )
+        response.raise_for_status()
+        return response.json()["network"]
+
+
 async def check_satspay(api_key: str) -> bool:
     async with httpx.AsyncClient() as client:
         try:

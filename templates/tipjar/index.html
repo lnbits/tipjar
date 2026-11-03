@@ -7,7 +7,7 @@
         <q-btn
           unelevated
           color="primary"
-          @click="tipjarDialog.show = true"
+          @click="openTipjarDialog"
           :disable="!hasSatsPay"
           >New TipJar</q-btn
         >
@@ -46,6 +46,14 @@
           <template v-slot:body="props">
             <q-tr :props="props">
               <q-td auto-width>
+                <q-btn
+                  flat
+                  dense
+                  size="xs"
+                  @click="updatetipjarDialog(props.row.id)"
+                  icon="edit"
+                  color="primary"
+                ></q-btn>
                 <q-btn
                   unelevated
                   dense
@@ -146,34 +154,56 @@
           filled
           dense
           emit-value
+          map-options
           v-model="tipjarDialog.data.wallet"
-          :options="g.user.walletOptions"
+          :options="lightningWalletOptions"
           label="Wallet *"
+          :rules="[val => !!val || 'Select a wallet']"
         >
         </q-select>
-        <div class="row">
-          <div class="col">
-            <div v-if="walletLinks.length > 0">
-              <q-checkbox v-model="tipjarDialog.chain" label="Chain" />
-            </div>
-            <div v-else>
-              <q-checkbox :value="false" label="Chain" disabled>
-                <q-tooltip>
-                  Watch-Only extension MUST be activated and have a wallet
-                </q-tooltip>
-              </q-checkbox>
-            </div>
-          </div>
-        </div>
+        <q-checkbox
+          v-model="tipjarDialog.chain"
+          label="Accept onchain payments"
+          :disable="!tipjarDialog.data.wallet"
+          @update:model-value="val => val && getWalletLinks()"
+        ></q-checkbox>
         <div v-if="tipjarDialog.chain">
           <q-select
             filled
             dense
             emit-value
+            map-options
             v-model="tipjarDialog.data.onchain"
-            :options="walletLinks"
-            label="Chain Wallet"
+            :options="onchainWalletOptions"
+            label="Onchain Wallet"
+            hint="Receive through SatsPay using an LNbits or Watchonly wallet"
           ></q-select>
+          <q-btn
+            v-if="!hasCoreOnchainWallet"
+            flat
+            dense
+            color="primary"
+            label="Create onchain wallet"
+            @click="createOnchainWallet"
+          ></q-btn>
+          <q-banner
+            v-if="selectedCoreWallet && selectedCoreWallet.status !== 'ready'"
+            dense
+            class="bg-orange-2 text-orange-9 q-mt-sm"
+          >
+            <div
+              v-text="selectedCoreWallet.status === 'setup'
+                ? 'Set up this onchain wallet before receiving.'
+                : 'Back up this onchain wallet before receiving.'"
+            ></div>
+            <q-btn
+              flat
+              dense
+              color="primary"
+              :label="selectedCoreWallet.status === 'setup' ? 'Set up wallet' : 'Back up wallet'"
+              @click="openOnchainWallet(selectedCoreWallet.id)"
+            ></q-btn>
+          </q-banner>
           <q-input
             filled
             dense
@@ -200,21 +230,12 @@
         ></q-input>
         <div class="row q-mt-lg">
           <q-btn
-            v-if="tipjarDialog.data.id"
             unelevated
             color="primary"
             type="submit"
-            >Update TipJar</q-btn
-          >
-
-          <q-btn
-            v-else
-            unelevated
-            color="primary"
-            :disable="tipjarDialog.data.name == null"
-            type="submit"
-            >Create TipJar</q-btn
-          >
+            :disable="!tipjarDialog.data.name || !tipjarDialog.data.wallet || onchainSelectionInvalid"
+            :label="tipjarDialog.data.id ? 'Update TipJar' : 'Create TipJar'"
+          ></q-btn>
           <q-btn v-close-popup flat color="grey" class="q-ml-auto"
             >Cancel</q-btn
           >
